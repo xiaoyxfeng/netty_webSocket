@@ -1,4 +1,4 @@
-package com.example.springboot_websocket.netty;
+package com.example.netty.netty;
 
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;

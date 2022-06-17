@@ -1,15 +1,15 @@
-package com.example.springboot_websocket;
+package com.example.netty;
 
-import com.example.springboot_websocket.netty.NettyWebSocketServer;
+import com.example.netty.netty.NettyWebSocketServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
-public class SpringbootWebSocketApplication {
+public class NettySocketApplication {
 
     public static void main(String[] args) {
-        ConfigurableApplicationContext ac = SpringApplication.run(SpringbootWebSocketApplication.class, args);
+        ConfigurableApplicationContext ac = SpringApplication.run(NettySocketApplication.class, args);
         //在SpringBoot启动类中加入以下内容
         try {
             //启动netty服务器

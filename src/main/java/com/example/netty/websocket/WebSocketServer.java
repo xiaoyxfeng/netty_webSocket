@@ -1,14 +1,11 @@
-package com.example.springboot_websocket.websocket;
+package com.example.netty.websocket;
 
 import org.springframework.stereotype.Component;
 
 //import javax.websocket.*;
 //import javax.websocket.server.PathParam;
 //import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * @Description:
