@@ -1,0 +1,20 @@
+server:
+  port: 8088
+  netty:
+    websocket:
+      port: 8000
+      ip: "0.0.0.0"
+#      max-frame-size: 65536 * 10
+#      path: /ws
+#      subprotocols: WebSocket
+#      allowExtensions: true
+
+
+ip: "0.0.0.0"
+
+spring:
+  #显示页面模块配置
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
