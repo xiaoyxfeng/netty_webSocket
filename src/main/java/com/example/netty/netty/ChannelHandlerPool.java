@@ -73,11 +73,14 @@ public class ChannelHandlerPool {
         channelGroup.remove(findChannel(channelId));
         channelMap.entrySet().stream().forEach((entry) -> {
             ConcurrentHashMap<ChannelId,Integer> channelIdMap = entry.getValue();
-            if (channelIdMap.get(channelId) != null){
-                channelIdMap.remove(channelId);
-                if (channelIdMap.size() == 0) {
-                    channelMap.remove(entry.getKey());
+            for (ChannelId ch: channelIdMap.keySet()) {
+                if (channelId.equals(ch.asLongText())) {
+                    channelIdMap.remove(ch);
+                    break;
                 }
+            }
+            if (channelIdMap.size() == 0) {
+                channelMap.remove(entry.getKey());
             }
         });
     }

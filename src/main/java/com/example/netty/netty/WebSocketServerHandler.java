@@ -8,6 +8,10 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.AttributeKey;
+import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +29,52 @@ import java.util.Map;
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private WebSocketServerHandshaker handshaker;
+    private final AttributeKey<Integer> counterAttr = AttributeKey.valueOf("count_Attr");;
+    private final Integer heard_count = 3;
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+
+        if (!ctx.channel().isActive()) {
+            ctx.channel().close();
+            ChannelHandlerPool.removeChannel(ctx.channel().id().asLongText());
+            return;
+        }
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent idleStateEvent = (IdleStateEvent) evt;
+            switch (idleStateEvent.state()) {
+                case READER_IDLE: {
+                    log.info("进入读空闲...");
+                    ctx.writeAndFlush(new TextWebSocketFrame("heard beat !")).addListener(future -> {
+//                        if(future.isSuccess()) {
+//                            ctx.channel().attr(counterAttr).set(0);
+//                        }else {
+                            Integer counter = ctx.channel().attr(counterAttr).get();
+                            counter = ++counter;
+                            log.info(ctx.channel().id().asShortText() + "，发送心跳: " + counter + "次");
+                            if(counter >= heard_count) {
+                                ctx.disconnect();
+                                ChannelHandlerPool.removeChannel(ctx.channel().id().asLongText());
+                            } else {
+                                ctx.channel().attr(counterAttr).set(counter);
+                            }
+//                        }
+                    });
+                    break;
+                }
+                case WRITER_IDLE:
+                    log.info("进入写空闲...");
+                    break;
+                case ALL_IDLE:
+                    log.info("进入读写空闲..." + ctx.channel().id().asShortText());
+                    break;
+                default:
+                    break;
+            }
+        }else {
+            super.userEventTriggered(ctx,evt);
+        }
+    }
 
     /**
      * @Description: 建立连接
@@ -35,8 +85,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
         log.info("与客户端建立连接，通道开启！");
+        ctx.channel().attr(counterAttr).set(0);
         //添加到channelGroup通道组
 //        MyChannelHandlerPool.addChannel(ctx.channel());
     }
@@ -52,11 +102,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.info("与客户端断开连接，通道关闭！");
         //从channelGroup通道组删除
-//        MyChannelHandlerPool.removeChannel(ctx.channel());
+        ChannelHandlerPool.removeChannel(ctx.channel().id().asLongText());
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+
+        //如果有消息过来，将当前Channel的心跳记录置为0
+        if (ctx.channel().attr(counterAttr).get() != 0) {
+            ctx.channel().attr(counterAttr).set(0);
+        }
         if (msg instanceof FullHttpRequest){
             //以http请求形式接入，但是走的是websocket
             handleHttpRequest(ctx, (FullHttpRequest) msg);
@@ -70,6 +125,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
     }
 
     private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+
         //要求Upgrade为websocket，过滤掉get/Post
         if (!req.decoderResult().isSuccess()
                 || (!"websocket".equals(req.headers().get("Upgrade")))) {
@@ -109,7 +165,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             //单发消息
             sendMessage(ChannelHandlerPool.findChannelByClentId(clentId),receiverMsg);
             //群发消息
-            sendAllMessage(receiverMsg);
+//            sendAllMessage(receiverMsg);
         }
     }
 
@@ -136,7 +192,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             JSONObject jsonParam = JSON.parseObject(params);
             String content = (String)jsonParam.get("content");
 
-
             //处理消息
             //群发
             if ("all".equals(jsonParam.get("toUserId"))) {
@@ -144,16 +199,19 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
                 sendAllMessage(content);
             }else {
                 //单发消息
-                List<String> list = new ArrayList<>();
-                list.add("1");
-                list.add("2");
-                List<Channel> channelList = ChannelHandlerPool.findChannelByClentIds(list);
-                sendMessage(channelList,content);
+                List<Channel> list = new ArrayList<>();
+                list.add(ctx.channel());
+//                list.add("1");
+//                list.add("2");
+//                List<Channel> channelList = ChannelHandlerPool.findChannelByClentIds(list);
+                sendMessage(list,content);
             }
             return;
         }
 
         if (frame instanceof BinaryWebSocketFrame) {
+            BinaryWebSocketFrame binaryFrame = (BinaryWebSocketFrame) frame;
+            String result = binaryFrame.content().toString(CharsetUtil.UTF_8);
             ctx.write(frame.retain());
         }
     }

@@ -7,6 +7,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +43,7 @@ public class NettyWebSocketServer {
                                     .addLast(new HttpServerCodec())
                                     .addLast(new HttpObjectAggregator(65536))//聚合器，使用websocket会用到
                                     .addLast(new ChunkedWriteHandler())//用于大数据的分区传输
+                                    .addLast(new IdleStateHandler(10,20,30))
                                     .addLast(new WebSocketServerHandler()); //自定义消息处理类
 //                                    .addLast(new WebSocketServerProtocolHandler(nettyConfig.getPath(), nettyConfig.getSubprotocols(), nettyConfig.getAllowExtensions(), nettyConfig.getMaxFrameSize()));
 
