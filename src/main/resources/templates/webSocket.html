@@ -19,7 +19,7 @@
     var list = [];
     function openSocket() {
 
-        for (let i = 0; i < 5; i++){
+        for (let i = 0; i < 10; i++){
             if(typeof(WebSocket) == "undefined") {
                 console.log("您的浏览器不支持WebSocket");
             }else{
@@ -27,7 +27,7 @@
                 //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
                 var clentId = document.getElementById('clentId').value;
                 // var socketUrl="ws://127.0.0.1:22599/webSocket/"+clentId;
-                var socketUrl="ws://192.168.1.107:8000/ws/"+ i + "?clentId=" + i;
+                var socketUrl="ws://192.168.1.103:8000/ws/"+ i + "?clentId=" + i;
                 console.log(socketUrl);
                 // if(socket!=null){
                 //     socket.close();
@@ -78,21 +78,20 @@
                         return;
                     }
                     flag ++;
-                    var content = "这是第" + 1 + "条消息";
+                    var content = "这是第" + flag + "条消息";
                     var msg = '{"toUserId":"'+"3"+'","content":"'+ content +'"}';
                     list[3].send(msg);
                 },3000);
 
-            var flag2 = false;
-            var b = setInterval(function () {
-
-                if (flag2) {
-                    window.clearInterval(b)
-                    return;
-                }
-                flag2 = true;
-                list[0].close();
-            },5000);
+            // var flag2 = false;
+            // var b = setInterval(function () {
+            //
+            //     if (flag2) {
+            //         window.clearInterval(b)
+            //         return;
+            //     }
+            //     flag2 = true;
+            // },5000);
                 // for (let j = 1; j <= 100; j++) {
                 //     var content = "这是第" + 1 + "条消息";
                 //     var msg = '{"toUserId":"'+"all"+'","content":"'+ content +'"}';
